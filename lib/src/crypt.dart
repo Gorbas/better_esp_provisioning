@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 
 class Crypt {
   static const MethodChannel _channel =
-      const MethodChannel('esp_provisioning');
+  const MethodChannel('esp_provisioning');
 
   Future<bool> init (Uint8List key, Uint8List iv) async {
     return await _channel.invokeMethod('init', {
@@ -13,8 +13,8 @@ class Crypt {
       'iv': iv,
     });
   }
-  Future<Uint8List> crypt (Uint8List data) async {
-    return _channel.invokeMethod('crypt', {
+  Future<Uint8List?> crypt (Uint8List? data) async {
+    return _channel.invokeMethod<Uint8List>('crypt', {
       'data': data,
     });
   }

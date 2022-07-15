@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:flutter_ble_lib/flutter_ble_lib.dart';
+import 'package:collection/collection.dart';
+import 'package:esp_provisioning/esp_provisioning.dart';
+import 'package:esp_provisioning/extensions.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'transport.dart';
 
 class TransportBLE implements ProvTransport {
-  final Peripheral peripheral;
+  final BluetoothDevice peripheral;
+  List<BluetoothService> peripheralServices = <BluetoothService>[];
+  List<BluetoothCharacteristic> cList = <BluetoothCharacteristic>[];
   final String serviceUUID;
-  Map<String, String> nuLookup;
+  late Map<String, String> nuLookup;
   final Map<String, String> lockupTable;
 
   static const PROV_BLE_SERVICE = '021a9004-0382-4aea-bff4-6b3f1c5adfb4';
@@ -21,50 +26,81 @@ class TransportBLE implements ProvTransport {
 
   TransportBLE(this.peripheral,
       {this.serviceUUID = PROV_BLE_SERVICE, this.lockupTable = PROV_BLE_EP}) {
-    nuLookup = new Map<String, String>();
+    nuLookup = Map<String, String>();
 
     for (var name in lockupTable.keys) {
-      var charsInt = int.parse(lockupTable[name], radix: 16);
+      var charsInt = int.parse(lockupTable[name]!, radix: 16);
       var serviceHex = charsInt.toRadixString(16).padLeft(4, '0');
       nuLookup[name] =
           serviceUUID.substring(0, 4) + serviceHex + serviceUUID.substring(8);
     }
   }
 
+  Future<bool> _isConnected(BluetoothDevice peripheral) async {
+    final state = await peripheral.state.first;
+    return state == BluetoothDeviceState.connected;
+  }
+
   Future<bool> connect() async {
-    bool isConnected = await peripheral.isConnected();
+    bool isConnected = await _isConnected(peripheral);
     if (isConnected) {
       return Future.value(true);
     }
-    await peripheral.connect(requestMtu: 512);
-    await peripheral.discoverAllServicesAndCharacteristics(
-        transactionId: 'discoverAllServicesAndCharacteristics');
-    return await peripheral.isConnected();
-  }
+    await peripheral.connect(timeout: const Duration(seconds: 10));
 
-  Future<Uint8List> sendReceive(String epName, Uint8List data) async {
-    if (data != null){ 
-      if( data.length > 0){
-        await peripheral.writeCharacteristic(serviceUUID, nuLookup[epName??""], data, true);
+    if (isConnected) {
+      try {
+        peripheralServices = await peripheral.discoverServices();
+      } on TimeoutException {
+        throw(
+            'TransportBLE : discoverServices for ${peripheral.name} timed out ');
+      } catch (e) {
+        throw(
+            'TransportBLE : discoverServices for ${peripheral.name} unknown exception ${e.toString()} ');
+      }
+
+      // extract the zuma service
+      peripheralServices =
+          peripheralServices.where((s) => s.uuid.toString() == serviceUUID).toList();
+
+      // get the zuma service characteristics
+      for (var service in peripheralServices) {
+        cList = service.characteristics;
       }
     }
-    CharacteristicWithValue receivedData = await peripheral.readCharacteristic(
-        serviceUUID, nuLookup[epName??""],
-        transactionId: 'readCharacteristic');
-    return receivedData.value;
+
+    //await peripheral.discoverAllServicesAndCharacteristics(
+    //    transactionId: 'discoverAllServicesAndCharacteristics');
+    return await _isConnected(peripheral);
+  }
+
+  Future<Uint8List?> sendReceive(String? epName, Uint8List? data) async {
+    if (data != null){ 
+      if( data.length > 0){
+        var c = cList.firstWhereOrNull((BluetoothCharacteristic c) =>
+        c.uuid.toString() == nuLookup[epName??""]);
+        if (c != null) {
+          await c.write(data, withoutResponse: true);
+          var response = await c.read();
+          return response.asUint8List();
+        }
+      }
+    }
+    return null;
+
   }
 
   Future<void> disconnect() async {
-    bool check = await peripheral.isConnected();
+    bool check = await _isConnected(peripheral);
     if(check){  
-      return await peripheral.disconnectOrCancelConnection();
+      return await peripheral.disconnect();
     }else{
       return;
     }
   }
 
   Future<bool> checkConnect() async {
-    return await peripheral.isConnected();
+    return await _isConnected(peripheral);
   }
 
   void dispose() {

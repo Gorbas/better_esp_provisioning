@@ -43,8 +43,8 @@ public class EspProvisioningPlugin implements FlutterPlugin, MethodCallHandler {
   // depending on the user's project. onAttachedToEngine or registerWith must both be defined
   // in the same class.
   public static void registerWith(Registrar registrar) {
-    final MethodChannel channel = new MethodChannel(registrar.messenger(), "esp_provisioning");
-    channel.setMethodCallHandler(new EspProvisioningPlugin());
+      final MethodChannel channel = new MethodChannel(registrar.messenger(), "esp_provisioning");
+      channel.setMethodCallHandler(new EspProvisioningPlugin());
   }
 
   @Override
