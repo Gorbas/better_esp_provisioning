@@ -1,5 +1,3 @@
-
-
 import 'dart:typed_data';
 
 abstract class ProvTransport {
@@ -10,5 +8,4 @@ abstract class ProvTransport {
   Future<void> disconnect();
 
   Future<Uint8List?> sendReceive(String? epName, Uint8List? data);
-
 }
