@@ -21,14 +21,15 @@ class EspProv {
 
     await transport.disconnect();
 
-    if(await transport.connect()){
+    if (await transport.connect()) {
       while (await transport.checkConnect()) {
-        var request = await security.securitySession(responseData : responseData);
+        var request =
+            await security.securitySession(responseData: responseData);
         if (request == null) {
           return;
         }
-        var response =
-            await transport.sendReceive('prov-session', request.writeToBuffer());
+        var response = await transport.sendReceive(
+            'prov-session', request.writeToBuffer());
         if (response?.isEmpty ?? true) {
           throw Exception('Empty response');
         }
