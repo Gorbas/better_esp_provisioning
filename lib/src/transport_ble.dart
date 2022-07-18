@@ -48,53 +48,48 @@ class TransportBLE implements ProvTransport {
     }
     await peripheral.connect(timeout: const Duration(seconds: 10));
 
-    if (isConnected) {
-      try {
-        peripheralServices = await peripheral.discoverServices();
-      } on TimeoutException {
-        throw(
-            'TransportBLE : discoverServices for ${peripheral.name} timed out ');
-      } catch (e) {
-        throw(
-            'TransportBLE : discoverServices for ${peripheral.name} unknown exception ${e.toString()} ');
-      }
-
-      // extract the zuma service
-      peripheralServices =
-          peripheralServices.where((s) => s.uuid.toString() == serviceUUID).toList();
-
-      // get the zuma service characteristics
-      for (var service in peripheralServices) {
-        cList = service.characteristics;
-      }
+    try {
+      peripheralServices = await peripheral.discoverServices();
+    } on TimeoutException {
+      throw ('TransportBLE : discoverServices for ${peripheral.name} timed out ');
+    } catch (e) {
+      throw ('TransportBLE : discoverServices for ${peripheral.name} unknown exception ${e.toString()} ');
     }
 
-    //await peripheral.discoverAllServicesAndCharacteristics(
-    //    transactionId: 'discoverAllServicesAndCharacteristics');
+    peripheralServices = peripheralServices
+        .where((s) => s.uuid.toString() == serviceUUID)
+        .toList();
+
+    for (var service in peripheralServices) {
+      cList = service.characteristics;
+    }
+
     return await _isConnected(peripheral);
   }
 
   Future<Uint8List?> sendReceive(String? epName, Uint8List? data) async {
-    if (data != null){ 
-      if( data.length > 0){
+    if (data != null) {
+      if (data.length > 0) {
         var c = cList.firstWhereOrNull((BluetoothCharacteristic c) =>
-        c.uuid.toString() == nuLookup[epName??""]);
+            c.uuid.toString() == nuLookup[epName ?? ""]);
         if (c != null) {
-          await c.write(data, withoutResponse: true);
+          await c.write(data, withoutResponse: false);
           var response = await c.read();
+          // print('response: ${response.toString()}');
           return response.asUint8List();
+        } else {
+          throw Exception('No characteristic for $epName');
         }
       }
     }
     return null;
-
   }
 
   Future<void> disconnect() async {
     bool check = await _isConnected(peripheral);
-    if(check){  
+    if (check) {
       return await peripheral.disconnect();
-    }else{
+    } else {
       return;
     }
   }
