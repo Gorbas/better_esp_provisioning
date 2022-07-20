@@ -73,7 +73,7 @@ class Security1 implements ProvSecurity {
       await setup1Response(responseData!);
       return null;
     }
-    throw Exception('Unexpected state');
+    throw Exception('Unexpected state - ${sessionState.toString()}');
   }
 
   Future<SessionData?> setup0Request() async {
