@@ -75,7 +75,7 @@ class TransportBLE implements ProvTransport {
         if (c != null) {
           await c.write(data, withoutResponse: false);
           var response = await c.read();
-          // print('response: ${response.toString()}');
+          print('response: ${response.toString()}');
           return response.asUint8List();
         } else {
           throw Exception('No characteristic for $epName');
