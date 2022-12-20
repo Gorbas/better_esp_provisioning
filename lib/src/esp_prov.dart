@@ -59,7 +59,7 @@ class EspProv {
   Future<WiFiScanPayload> startScanRequest(
       {bool blocking = true,
       bool passive = false,
-      int groupChannels = 5,
+      int groupChannels = 50,
       int periodMs = 0}) async {
     WiFiScanPayload payload = WiFiScanPayload();
     payload.msg = WiFiScanMsgType.TypeCmdScanStart;
@@ -129,7 +129,7 @@ class EspProv {
   Future<List<WifiAP>> scan(
       {bool blocking = true,
       bool passive = false,
-      int groupChannels = 5,
+      int groupChannels = 50,
       int periodMs = 0}) async {
     await startScanRequest(
         blocking: blocking,
