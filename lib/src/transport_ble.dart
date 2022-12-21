@@ -46,7 +46,7 @@ class TransportBLE implements ProvTransport {
     if (isConnected) {
       return Future.value(true);
     }
-    await peripheral.connect(timeout: const Duration(seconds: 10));
+    await peripheral.connect(timeout: const Duration(seconds: 60));
 
     try {
       peripheralServices = await peripheral.discoverServices();
