@@ -71,16 +71,17 @@ public class EspProvisioningPlugin implements FlutterPlugin, MethodCallHandler {
       result.success(true);
     } else if (call.method.equals("crypt")) {
       if (cipher == null) {
-        throw new Exception("init should have been called before crypt!");
+        result.success(false);
+      } else {
+        byte[] data = new byte[0];
+        byte[] check =  call.argument("data");
+        // check =;
+        if( check!=null){
+          data = check;
+        }
+        byte[] ret = cipher.update(data);
+        result.success(ret);
       }
-      byte[] data = new byte[0];
-      byte[] check =  call.argument("data");
-      // check =;
-      if( check!=null){
-        data = check;
-      }
-      byte[] ret = cipher.update(data);
-      result.success(ret);
     } else {
       result.notImplemented();
     }
