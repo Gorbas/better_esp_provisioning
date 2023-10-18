@@ -38,7 +38,7 @@ class TransportBLE implements ProvTransport {
 
   Future<bool> _isConnected(BluetoothDevice peripheral) async {
     final state = await peripheral.state.first;
-    return state == BluetoothDeviceState.connected;
+    return state == BluetoothDeviceState.connected || state == BluetoothConnectionState.connected;
   }
 
   Future<bool> connect() async {
