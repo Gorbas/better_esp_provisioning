@@ -73,6 +73,7 @@ class TransportBLE implements ProvTransport {
         var c = cList.firstWhereOrNull((BluetoothCharacteristic c) =>
             c.uuid.toString() == nuLookup[epName ?? ""]);
         if (c != null) {
+          print("Characteristic UUID is ${c.uuid.toString()}");
           await c.write(data, withoutResponse: false);
           var response = await c.read();
           print('response: ${response.toString()}');
